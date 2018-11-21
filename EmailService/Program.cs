@@ -75,7 +75,7 @@ namespace EmailService
                     .WithIdentity("processTrigger", "group2")
                     .StartNow()
                     .WithSimpleSchedule(x => x
-                        .WithIntervalInSeconds(30)
+                        .WithIntervalInMinutes(2)
                         .RepeatForever())
                     .Build();
 
