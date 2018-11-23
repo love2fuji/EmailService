@@ -81,6 +81,7 @@
     <Compile Include="Common\Email.cs" />
     <Compile Include="Common\ProcessState.cs" />
     <Compile Include="Common\Runtime.cs" />
+    <Compile Include="Common\SaveEmailToDB.cs" />
     <Compile Include="Common\SqliteHelper.cs" />
     <Compile Include="EnergyDataJob\SentReportJob.cs" />
     <Compile Include="Main.cs">

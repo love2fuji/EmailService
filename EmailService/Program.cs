@@ -1,4 +1,5 @@
 ﻿using EmailService.CheckProcess;
+using EmailService.EnergyDataJob;
 using EmailService.Test;
 using Quartz;
 using Quartz.Impl;
@@ -79,9 +80,24 @@ namespace EmailService
                         .RepeatForever())
                     .Build();
 
+                //job3
+                IJobDetail sentReportJob = JobBuilder.Create<SentReportJob>()
+                   .WithIdentity("sentReportJob", "group2")
+                   .Build();
+
+                // Trigger the job to run now, and then repeat every 10 seconds
+                ITrigger sentReportTrigger = TriggerBuilder.Create()
+                    .WithIdentity("sentReportTrigger", "group2")
+                    .StartNow()
+                    .WithSimpleSchedule(x => x
+                        .WithIntervalInSeconds(30)
+                        .RepeatForever())
+                    .Build();
+
                 // Tell quartz to schedule the job using our trigger
                 await scheduler.ScheduleJob(job, trigger);
-                await scheduler.ScheduleJob(processJob, processTrigger);
+                //await scheduler.ScheduleJob(processJob, processTrigger);
+                await scheduler.ScheduleJob(sentReportJob, sentReportTrigger);
 
 
                 await scheduler.Start();

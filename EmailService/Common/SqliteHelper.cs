@@ -38,7 +38,10 @@ namespace EmailService.Common
                         }
                         affectedRows = command.ExecuteNonQuery();
                     }
-                    catch (Exception) { throw; }
+                    catch (Exception ex)
+                    {
+                        Config.log.Error(ex.Message); throw ex;
+                    }
                 }
             }
             return affectedRows;

@@ -28,6 +28,7 @@ namespace EmailService.CheckProcess
                     processStopCount++;
                 }
             }
+            //如果存在2个及以上的进程不运行，则发送运行异常告警提示
             if (processStopCount >= 2)
             {
                 Config.log.Warn("------开始 发送软件运行异常报告------");
@@ -50,6 +51,11 @@ namespace EmailService.CheckProcess
 
         }
 
+        /// <summary>
+        /// 发送软件运行状态异常告警提示
+        /// </summary>
+        /// <param name="processStates"></param>
+        /// <returns></returns>
         public int SendProcesssReport(List<ProcessState> processStates)
         {
             try
@@ -112,7 +118,7 @@ namespace EmailService.CheckProcess
                     eModel.Subject = myEmail.mailSubject;
                     eModel.Body = myEmail.mailBody;
 
-                    int sqlResult = SetEmailToDB(eModel);
+                    int sqlResult = SaveEmailToDB.SetEmailToDB(eModel);
                     if (sqlResult == 1)
                     {
                         Config.log.Info("Email 软件监测告警 写入数据库完成！");
@@ -137,35 +143,7 @@ namespace EmailService.CheckProcess
             }
         }
 
-        public static int SetEmailToDB(SaveEmailModel emailModel)
-        {
-            string sql = @"INSERT INTO SendEmailResult ( Sender,Receiver,CarbonCopy,SendTime,State,MailSubject,MailBody,Attachments)
-                                                 VALUES(@Sender,@Receiver,@CarbonCopy,@SendTime,@State,@MailSubject,@MailBody,@Attachments); ";
-
-            SQLiteParameter[] parameters =  {
-                                new SQLiteParameter("@Sender", emailModel.Sender),
-                                new SQLiteParameter("@Receiver",emailModel.Receiver),
-                                new SQLiteParameter("@CarbonCopy",emailModel.CarbonCopy),
-                                new SQLiteParameter("@SendTime",emailModel.SendTime),
-                                new SQLiteParameter("@State",emailModel.SendState),
-                                new SQLiteParameter("@MailSubject",emailModel.Subject),
-                                new SQLiteParameter("@MailBody",emailModel.Body),
-                                new SQLiteParameter("@Attachments", emailModel.Attachment)
-                             };
-
-            int sqlResult = SqliteHelper.ExecuteNonQuery(sql, parameters);
-            if (sqlResult >= 1)
-            {
-                //Config.log.Info("Email 存入数据库 成功!");
-                return 1;
-            }
-            else
-            {
-                //Config.log.Info("Email 存入数据库 失败!");
-                return 0;
-            }
-
-        }
+       
 
 
 
