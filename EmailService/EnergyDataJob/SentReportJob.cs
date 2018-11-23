@@ -16,82 +16,97 @@ namespace EmailService.EnergyDataJob
 
         public async Task Execute(IJobExecutionContext context)
         {
-            /// <summary>
-            /// 待发送全部附件的路径（一个文件夹内的所有Excel文件）
-            /// </summary>
-            List<string> mailAttachmentsList = new List<string>();
-            //邮件附件所在文件夹路径
-            string MailAttachmentsPath = Config.GetValue("MailAttachmentsPath");
-            //将已经发送的成功的文件移动到目标文件夹
-            string TargetPath = Config.GetValue("TargetPath");
 
-            if (Directory.Exists(MailAttachmentsPath))
+            try
             {
-                string[] files = Directory.GetFiles(MailAttachmentsPath);
+                /// <summary>
+                /// 待发送全部附件的路径（一个文件夹内的所有Excel文件）
+                /// </summary>
+                List<string> mailAttachmentsList = new List<string>();
+                //邮件附件所在文件夹路径
+                string MailAttachmentsPath = Config.GetValue("MailAttachmentsPath");
+                //将已经发送的成功的文件移动到目标文件夹
+                string TargetPath = Config.GetValue("TargetPath");
 
-                // Copy the files and overwrite destination files if they already exist.
-                foreach (string s in files)
+                if (Directory.Exists(MailAttachmentsPath))
                 {
-                    // Use static Path methods to extract only the file name from the path.
-                    string fileName = Path.GetFileName(s);
+                    string[] files = Directory.GetFiles(MailAttachmentsPath);
 
-                    Console.WriteLine(" 邮件附件：" + fileName);
-                    Console.WriteLine("邮件附件路径：" + s);
-
-                    Config.log.Info(" 邮件附件：" + fileName);
-
-                    Runtime.ShowLog("----- 开始添加附件：-----");
-                    Runtime.ShowLog(" 邮件附件路径：" + s);
-
-                    Runtime.ShowLog(" 邮件附件：" + fileName);
-
-                    string sql = @"SELECT COUNT(1) FROM EmailAttachmentsState WHERE AttachmentsName LIKE '%" + fileName + "%';";
-
-                    int sqlResult = Convert.ToInt16(SqliteHelper.ExecuteScalar(sql, null));
-                    if (sqlResult == 0)
+                    Runtime.ShowLog("----- 开始 添加附件：-----");
+                    Config.log.Info("----- 开始 添加附件：-----");
+                    foreach (string s in files)
                     {
-                        mailAttachmentsList.Add(s);
-                        Config.log.Info("新增的邮件附件： " + s);
-                        Runtime.ShowLog("新增的邮件附件： " + s);
-                    }
-                    else
-                    {
-                        Config.log.Warn("已发送的邮件附件： " + s);
-                        Runtime.ShowLog("已发送的邮件附件： " + s);
-                    }
+                        // Use static Path methods to extract only the file name from the path.
+                        string fileName = Path.GetFileName(s);
+                        Config.log.Info(" 附件名称：" + fileName);
 
-                }
-                Runtime.ShowLog("----- 完成添加附件：-----");
-
-                if (SendEnergyReport(mailAttachmentsList) == 1)
-                {
-                    //Config.log.Info("Email: 用能报表 发送 成功!");
-                    Runtime.ShowLog("Email: 用能报表 发送 完成!");
-
-                    // 将发送成功的邮件 存入数据库
-                   
-                    //添加附件
-                    foreach (string item in mailAttachmentsList)
-                    {
-                        //eModel.Attachment += item;
-                        string fileName = Path.GetFileName(item);
-                        int sqlResult = SaveEmailToDB.SetAttachmentToDB(fileName, 1, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                        if (sqlResult == 1)
+                        //判断文件文件是否已发送，未发送文件则添加到待发送列表
+                        string sql = @"SELECT COUNT(1) FROM EmailAttachmentsState WHERE AttachmentsName LIKE '%" + fileName + "%';";
+                        int sqlResult = Convert.ToInt16(SqliteHelper.ExecuteScalar(sql, null));
+                        if (sqlResult == 0)
                         {
-                            Config.log.Info("DB: 用能报表 写入数据库完成！");
-                            Runtime.ShowLog("DB: 用能报表 写入数据库完成！");
+                            mailAttachmentsList.Add(s);
+                            Config.log.Info("新增的邮件附件： " + s);
+                            Runtime.ShowLog("新增的邮件附件： " + s);
                         }
                         else
                         {
-                            Config.log.Info("DB: 用能报表 写入数据库 失败！");
-                            Runtime.ShowLog("DB: 用能报表 写入数据库 失败！");
+                            Config.log.Warn("已发送的邮件附件： " + s);
+                        }
+
+                    }
+                    Runtime.ShowLog("----- 完成 添加附件：-----");
+                    Config.log.Info("----- 完成 添加附件：-----");
+
+                    Config.log.Info("----- 开始 发送邮件 -----");
+                    Runtime.ShowLog("----- 开始 发送邮件 -----");
+                    if (SendEnergyReport(mailAttachmentsList) == 1)
+                    {
+
+                        Config.log.Info("Email: 用能报表 发送 成功!");
+                        Runtime.ShowLog("Email: 用能报表 发送 成功!");
+
+                        Config.log.Info("----- 完成 发送邮件 -----");
+                        Runtime.ShowLog("----- 完成 发送邮件 -----");
+
+                        // 将发送成功的附件 存入数据库
+                        foreach (string item in mailAttachmentsList)
+                        {
+                            //eModel.Attachment += item;
+                            string fileName = Path.GetFileName(item);
+                            int sqlResult = SaveEmailToDB.SetAttachmentToDB(fileName, 1, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                            if (sqlResult == 1)
+                            {
+                                Config.log.Info("DB: 用能报表 " + fileName + "写入数据库 成功");
+                            }
+                            else
+                            {
+                                Config.log.Info("DB: 用能报表 " + fileName + "写入数据库 失败！");
+                            }
+                        }
+
+                        Config.log.Info("----- 开始 移动文件 -----");
+                        Runtime.ShowLog("----- 开始 移动文件 -----");
+                        if (MoveAllFiles(MailAttachmentsPath, TargetPath) > 0)
+                        {
+                            Config.log.Info("----- 完成 移动文件 -----");
+                            Runtime.ShowLog("----- 完成 移动文件 -----");
+                        }
+                        else
+                        {
+                            Config.log.Info("----- 移动文件 失败 -----");
+                            Runtime.ShowLog("----- 移动文件 失败 -----");
                         }
                     }
                 }
+
+                await Console.Out.WriteLineAsync("**********Task.CompletedTask from SentReportJob!");
             }
-
-
-            await Console.Out.WriteLineAsync("**********Task.CompletedTask from SentReportJob!");
+            catch (Exception ex)
+            {
+                Config.log.Info("----- 能耗报表操作 失败！ 详细：" + ex.Message);
+                Runtime.ShowLog("----- 能耗报表操作 失败！ 详细：" + ex.Message);
+            }
         }
 
         /// <summary>
@@ -114,7 +129,6 @@ namespace EmailService.EnergyDataJob
                 string MailSubject = Config.GetValue("MailSubject");
                 string MailBody = Config.GetValue("MailBody");
 
-
                 DateTime nowTime = DateTime.Now;
                 //string emailBody = "";
 
@@ -128,8 +142,8 @@ namespace EmailService.EnergyDataJob
                 //判断附件是否为空
                 if (emailAttachmentsList.Count == 0 || emailAttachmentsList == null)
                 {
-                    myEmail.mailBody = "内容：尊敬的用户，昨日" + "(" + nowTime.AddDays(-1).ToString("yyyy-MM-dd") + ")"
-                        + " 的用能报表尚未生成，请检查系统是否运行正常";
+                    myEmail.mailBody = "内容：尊敬的用户，新的的用能报表尚未生成 " + "(" + nowTime.AddDays(-1).ToString("yyyy-MM-dd") + ")"
+                        + " ，请检查系统是否运行正常";
                 }
                 else
                 {
@@ -140,9 +154,6 @@ namespace EmailService.EnergyDataJob
 
                 if (myEmail.Send())
                 {
-                    Config.log.Info("Email: 用能报表 发送 成功!");
-                    Runtime.ShowLog("Email: 用能报表 发送 成功!");
-
                     // 将发送成功的邮件 存入数据库
                     SaveEmailModel eModel = new SaveEmailModel();
                     eModel.Sender = myEmail.mailFrom;
@@ -162,14 +173,12 @@ namespace EmailService.EnergyDataJob
                     if (sqlResult == 1)
                     {
                         Config.log.Info("Email 用能日报表 写入数据库 完成！");
-                        Runtime.ShowLog("Email 用能日报表 写入数据库 完成！");
                     }
                     else
                     {
                         Config.log.Info("Email 用能日报表 写入数据库 失败！");
-                        Runtime.ShowLog("Email 用能日报表 写入数据库 失败！");
                     }
-                  
+
                     return 1;
                 }
 
@@ -203,34 +212,40 @@ namespace EmailService.EnergyDataJob
                 Directory.CreateDirectory(targetPath);
             }
 
-
-            if (Directory.Exists(sourcePath))
+            try
             {
-                //获取一个文件夹内全部文件
-                string[] files = Directory.GetFiles(sourcePath);
-
-                // Copy the files and overwrite destination files if they already exist.
-                foreach (string s in files)
+                if (Directory.Exists(sourcePath))
                 {
-                    // Use static Path methods to extract only the file name from the path.
-                    fileName = Path.GetFileName(s);
+                    //获取一个文件夹内全部文件
+                    string[] files = Directory.GetFiles(sourcePath);
 
-                    destFile = Path.Combine(targetPath, fileName);
-
-                    if (File.Exists(s))
+                    foreach (string s in files)
                     {
-                        File.Copy(s, destFile, true);
-                        File.Delete(s);
-                    }
+                        // Use static Path methods to extract only the file name from the path.
+                        fileName = Path.GetFileName(s);
 
+                        destFile = Path.Combine(targetPath, fileName);
+
+                        if (File.Exists(s))
+                        {  // Copy the files and overwrite destination files if they already exist.
+                            File.Copy(s, destFile, true);
+                            File.Delete(s);
+                        }
+                    }
+                    return 1;
+                }
+                else
+                {
+                    return 0;
                 }
             }
-            else
+            catch (Exception ex)
             {
+                Config.log.Info("----- 移动文件 失败! 详细：" + ex.Message);
+                Runtime.ShowLog("----- 移动文件 失败! 详细：" + ex.Message);
                 return 0;
             }
 
-            return 1;
         }
     }
 }
