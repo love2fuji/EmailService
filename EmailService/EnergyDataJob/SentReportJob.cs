@@ -12,11 +12,8 @@ namespace EmailService.EnergyDataJob
 {
     public class SentReportJob : IJob
     {
-
-
         public async Task Execute(IJobExecutionContext context)
         {
-
             try
             {
                 /// <summary>
@@ -99,8 +96,15 @@ namespace EmailService.EnergyDataJob
                         }
                     }
                 }
-
-                await Console.Out.WriteLineAsync("**********Task.CompletedTask from SentReportJob!");
+                else
+                {
+                    Config.log.Info("----- 能耗报表路径不存在，请检查路径是否正确！");
+                    Runtime.ShowLog("----- 能耗报表路径不存在，请检查路径是否正确！");
+                }
+                
+                Config.log.Info("***** 能耗报表任务执行完成：" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                Runtime.ShowLog("***** 能耗报表任务执行完成：" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                await Console.Out.WriteLineAsync("***** 能耗报表任务执行完成：" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
             }
             catch (Exception ex)
             {

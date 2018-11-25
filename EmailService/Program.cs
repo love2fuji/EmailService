@@ -32,17 +32,19 @@ namespace EmailService
         {
             try
             {
+                
                 // Grab the Scheduler instance from the Factory
-                NameValueCollection props = new NameValueCollection
-                {
-                    { "quartz.serializer.type", "binary" }
-                };
-                StdSchedulerFactory factory = new StdSchedulerFactory(props);
+                //NameValueCollection props = new NameValueCollection
+                //{
+                //    { "quartz.serializer.type", "binary" }
+                //};
+                StdSchedulerFactory factory = new StdSchedulerFactory();
                 IScheduler scheduler = await factory.GetScheduler();
 
                 // and start it off
-                //await scheduler.Start();
+                await scheduler.Start();
 
+                /*
                 // define the job and tie it to our HelloJob class
                 IJobDetail job = JobBuilder.Create<HelloJob>()
                     .WithIdentity("job1", "group1")
@@ -101,7 +103,8 @@ namespace EmailService
 
 
                 await scheduler.Start();
-                
+                */
+
             }
             catch (SchedulerException se)
             {
