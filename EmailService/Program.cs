@@ -14,16 +14,27 @@ namespace EmailService
 {
     static class Program
     {
+        private static System.Threading.Mutex mutex;
         /// <summary>
         /// 应用程序的主入口点。
         /// </summary>
         [STAThread]
         static void Main()
         {
-            RunProgramRunExample().GetAwaiter().GetResult();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Main());
+            //防止重复运行软件
+            mutex = new System.Threading.Mutex(true, "OnlyRun");
+            if (mutex.WaitOne(0, false))
+            {
+                RunProgramRunExample().GetAwaiter().GetResult();
+                Application.Run(new Main());
+            }
+            else
+            {
+                MessageBox.Show(" 软件已运行！请勿重复运行此软件", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Application.Exit();
+            }
             //RunProgramRunExample().GetAwaiter().GetResult();
 
         }
