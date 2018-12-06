@@ -142,11 +142,11 @@ namespace EmailService.EnergyDataJob
                 myEmail.mailFrom = MailFrom;
                 myEmail.mailToArray = MailToStr.Split(';');
                 myEmail.mailCcArray = MailToCcStr.Split(';');
-                myEmail.mailSubject = MailSubject + "(" + nowTime.AddDays(-1).ToString("yyyy-MM-dd") + ") ";
+                myEmail.mailSubject = MailSubject;
                 //判断附件是否为空
                 if (emailAttachmentsList.Count == 0 || emailAttachmentsList == null)
                 {
-                    myEmail.mailBody = "内容：尊敬的用户，新的的用能报表尚未生成 " + "(" + nowTime.AddDays(-1).ToString("yyyy-MM-dd") + ")"
+                    myEmail.mailBody = "邮件内容：尊敬的用户，新的用能报表尚未生成 " + "(" + nowTime.AddDays(-1).ToString("yyyy-MM-dd") + ")"
                         + " ，请检查系统是否运行正常";
                 }
                 else
