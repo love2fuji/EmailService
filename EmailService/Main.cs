@@ -1,4 +1,5 @@
-﻿using EmailService.Common;
+﻿using Dapper;
+using EmailService.Common;
 using EmailService.EnergyDataJob;
 using EmailService.WorkJob;
 using Newtonsoft.Json.Linq;
@@ -6,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -19,7 +21,7 @@ namespace EmailService
         public Main()
         {
             InitializeComponent();
-            
+
         }
 
         private void Main_Load(object sender, EventArgs e)
@@ -27,11 +29,11 @@ namespace EmailService
             Runtime.ServerLog = this.ServerLog;
             Runtime.ShowLog("------ 启动软件 ------");
             Runtime.m_IsRunning = false;
-            
+
 
             Runtime.ShowLog("初始化软件");
             Config.log.Info("初始化软件");
-            txtBoxEmailAddress.Text = Config.GetValue("MailToStr"); 
+            txtBoxEmailAddress.Text = Config.GetValue("MailToStr");
             textBoxSendTime.Text = Config.GetValue("MailSendTime");
             Runtime.ShowLog("收件人地址:" + Config.GetValue("MailToStr"));
             Config.log.Info("收件人地址:" + Config.GetValue("MailToStr"));
@@ -51,7 +53,7 @@ namespace EmailService
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private  void btnTestSendMail_Click(object sender, EventArgs e)
+        private void btnTestSendMail_Click(object sender, EventArgs e)
         {
             //SentReportJob sentReport = new SentReportJob();
             //await sentReport.Execute(null);
@@ -65,7 +67,7 @@ namespace EmailService
 
             string urlApi = "http://47.100.19.132:8060/appzhwater/getDyhMsg?SYNC_KEY=FSR3RFDAFW445452";
             //string jsonArray = GetWebAPI.GetResponse(urlApi,out string statusCode);
-            string jsonArrayStr = GetWebAPI.HttpGet(urlApi, out string statusCode);
+            string jsonArrayStr = GetWebAPI.HttpGetApi(urlApi, out string statusCode);
 
 
             Console.WriteLine("statusCode:" + statusCode);
@@ -73,10 +75,10 @@ namespace EmailService
             if (statusCode == "OK")
             {
                 JArray jArray = JArray.Parse(jsonArrayStr);
-                foreach ( var item in jArray)
+                foreach (var item in jArray)
                 {
                     JObject jObj = JObject.Parse(item.ToString());
-                    
+
 
                     Console.WriteLine("市政表编号:" + jObj["METER_NO"]);
                     Console.WriteLine("表名称:" + jObj["METER_NAME"]);
@@ -85,11 +87,55 @@ namespace EmailService
                     Console.WriteLine("累计流量:" + jObj["READ_VALUE"]);
                     Console.WriteLine("累计流量更新时间:" + jObj["UPDATE_READ_DATE"]);
 
+
+                    using (SqlConnection conn = new SqlConnection(Runtime.MSSQLServerConnect))
+                    {
+                        string sql = @"IF EXISTS (SELECT 1 FROM T_OV_MeterCurrentValue
+                                                        WHERE METER_NO = @METER_NO
+								                        )
+					                        BEGIN
+
+                                                UPDATE T_OV_MeterCurrentValue SET
+                                                    METER_NAME = @METER_NAME,
+                                                    TIME_VALUE = @TIME_VALUE,
+                                                    UPDATE_TIME_DATE = @UPDATE_TIME_DATE,
+                                                    READ_VALUE = @READ_VALUE,
+                                                    UPDATE_READ_DATE = @UPDATE_READ_DATE
+                                                    WHERE METER_NO = @METER_NO
+                                            END
+
+                                        ELSE
+
+                                            BEGIN
+                                                INSERT T_OV_MeterCurrentValue(
+                                                    METER_NO, METER_NAME, TIME_VALUE,
+						                            UPDATE_TIME_DATE, READ_VALUE, UPDATE_READ_DATE )
+						                            VALUES
+                                                    (@METER_NO, @METER_NAME, @TIME_VALUE,
+                                                     @UPDATE_TIME_DATE, @READ_VALUE, @UPDATE_READ_DATE
+                                                    )
+                                            END ";
+
+                        int count = conn.Execute(sql, new
+                        {
+                            METER_NO = jObj["METER_NO"].ToString(),
+                            METER_NAME = jObj["METER_NAME"].ToString(),
+                            TIME_VALUE = jObj["TIME_VALUE"].ToString(),
+                            UPDATE_TIME_DATE = jObj["UPDATE_TIME_DATE"].ToString(),
+                            READ_VALUE = jObj["READ_VALUE"].ToString(),
+                            UPDATE_READ_DATE = jObj["UPDATE_READ_DATE"].ToString()
+                        });
+
+                        if (count > 0)
+                        {
+                            Console.WriteLine(count + "条操作成功");
+                        }
+                    }
                 }
 
 
             }
-            
+
         }
 
 
@@ -151,6 +197,6 @@ namespace EmailService
 
         #endregion 窗体最小化，不退出软件
 
-       
+
     }
 }

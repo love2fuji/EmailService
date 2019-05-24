@@ -22,18 +22,44 @@
         <job-name>EnergyDataJob</job-name>
         <job-group>EnergyDataGroup</job-group>
         <!--<start-time>2018-01-22T00:00:00+08:00</start-time>-->
-        <cron-expression>0 0/20 * * * ?</cron-expression>
+        <cron-expression>0 0 8 * * ?</cron-expression>
         <!--每10秒执行一次 配置完整格式为： [秒] [分] [小时] [日] [月] [周] [年] -->
         <!--每天每个小时执行一次 配置完整格式为： 0 0 0/1 * * ? -->
         <!--每天2点30分执行一次 配置完整格式为： 0 30 2 * * ? -->
       </cron>
     </trigger>
 
+    <!--获取webApi数据 任务-->
+    <job>
+      <name>GetWebAPIJob</name>
+      <group>WebGroup</group>
+      <description>获取webApi数据 任务</description>
+      <job-type>EmailService.WorkJob.GetWebAPI, EmailService</job-type>
+      <!--格式：实现了IJob接口的包含完整命名空间的类名,程序集名称-->
+      <durable>true</durable>
+      <recover>false</recover>
+    </job>
+
+    <trigger>
+      <cron>
+        <name>GetWebAPITrigger</name>
+        <group>WebTriggerGroup</group>
+        <job-name>GetWebAPIJob</job-name>
+        <job-group>WebGroup</job-group>
+        <!--<start-time>2018-01-22T00:00:00+08:00</start-time>-->
+        <cron-expression>0 0/2 * * * ?</cron-expression>
+        <!--每10秒执行一次 配置完整格式为： [秒] [分] [小时] [日] [月] [周] [年] -->
+        <!--每天每个小时执行一次 配置完整格式为： 0 0 0/1 * * ? -->
+        <!--每天2点30分执行一次 配置完整格式为： 0 30 2 * * ? -->
+      </cron>
+    </trigger>
+    
+
     <!--监测进程运行状态，并发送运行异常告警提示-->
     <job>
       <name>CheckProcessJob</name>
       <group>CheckProcessGroup</group>
-      <description>发送用能报表</description>
+      <description>监测进程运行状态</description>
       <job-type>EmailService.CheckProcess.CheckProcessJob, EmailService</job-type>
       <!--格式：实现了IJob接口的包含完整命名空间的类名,程序集名称-->
       <durable>true</durable>
@@ -47,7 +73,7 @@
         <job-name>CheckProcessJob</job-name>
         <job-group>CheckProcessGroup</job-group>
         <!--<start-time>2018-01-22T00:00:00+08:00</start-time>-->
-        <cron-expression>0 0/30 * * * ?</cron-expression>
+        <cron-expression>0 0 0/1 * * ?</cron-expression>
         <!--每30分钟执行一次-->
       </cron>
     </trigger>

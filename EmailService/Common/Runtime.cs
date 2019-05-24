@@ -11,6 +11,9 @@ namespace EmailService.Common
         public static bool m_IsRunning;
         public static bool m_IsRefreshToken;
         public static RichTextBox ServerLog;
+        public static string ApiURL=Config.GetValue("ApiURL");
+        public static string MSSQLServerConnect = Config.GetValue("MSSQLServerConnect");
+
 
         /// <summary>
         /// 显示软件运行日志
