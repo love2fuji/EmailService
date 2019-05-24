@@ -22,7 +22,7 @@
         <job-name>EnergyDataJob</job-name>
         <job-group>EnergyDataGroup</job-group>
         <!--<start-time>2018-01-22T00:00:00+08:00</start-time>-->
-        <cron-expression>0 0/2 * * * ?</cron-expression>
+        <cron-expression>0 0/20 * * * ?</cron-expression>
         <!--每10秒执行一次 配置完整格式为： [秒] [分] [小时] [日] [月] [周] [年] -->
         <!--每天每个小时执行一次 配置完整格式为： 0 0 0/1 * * ? -->
         <!--每天2点30分执行一次 配置完整格式为： 0 30 2 * * ? -->

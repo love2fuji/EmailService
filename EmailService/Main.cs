@@ -1,5 +1,7 @@
 ﻿using EmailService.Common;
 using EmailService.EnergyDataJob;
+using EmailService.WorkJob;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -49,16 +51,45 @@ namespace EmailService
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void btnTestSendMail_Click(object sender, EventArgs e)
+        private  void btnTestSendMail_Click(object sender, EventArgs e)
         {
-            SentReportJob sentReport = new SentReportJob();
-            await sentReport.Execute(null);
+            //SentReportJob sentReport = new SentReportJob();
+            //await sentReport.Execute(null);
 
             //return Task.Run(async () =>
             //{
-                
+
             //    Console.WriteLine("定时任务执行:" + DateTime.Now.ToString());
             //});
+
+
+            string urlApi = "http://47.100.19.132:8060/appzhwater/getDyhMsg?SYNC_KEY=FSR3RFDAFW445452";
+            //string jsonArray = GetWebAPI.GetResponse(urlApi,out string statusCode);
+            string jsonArrayStr = GetWebAPI.HttpGet(urlApi, out string statusCode);
+
+
+            Console.WriteLine("statusCode:" + statusCode);
+            Console.WriteLine("获取Json:" + jsonArrayStr);
+            if (statusCode == "OK")
+            {
+                JArray jArray = JArray.Parse(jsonArrayStr);
+                foreach ( var item in jArray)
+                {
+                    JObject jObj = JObject.Parse(item.ToString());
+                    
+
+                    Console.WriteLine("市政表编号:" + jObj["METER_NO"]);
+                    Console.WriteLine("表名称:" + jObj["METER_NAME"]);
+                    Console.WriteLine("瞬时流量:" + jObj["TIME_VALUE"]);
+                    Console.WriteLine("瞬时流量更新时间:" + jObj["UPDATE_TIME_DATE"]);
+                    Console.WriteLine("累计流量:" + jObj["READ_VALUE"]);
+                    Console.WriteLine("累计流量更新时间:" + jObj["UPDATE_READ_DATE"]);
+
+                }
+
+
+            }
+            
         }
 
 
