@@ -18,40 +18,41 @@ namespace EmailService.WorkJob
     {
         public Task Execute(IJobExecutionContext context)
         {
-            string UpdateSQL = @"IF EXISTS (SELECT 1 FROM T_OV_MeterCurrentValue
-                                                        WHERE METER_NO = @METER_NO
-								                        )
-					                        BEGIN
+            const string UpdateSQL = 
+                @"IF EXISTS (SELECT 1 FROM T_OV_MeterCurrentValue
+                                    WHERE METER_NO = @METER_NO
+								    )
+					    BEGIN
 
-                                                UPDATE T_OV_MeterCurrentValue SET
-                                                    METER_NAME = @METER_NAME,
-                                                    TIME_VALUE = @TIME_VALUE,
-                                                    UPDATE_TIME_DATE = @UPDATE_TIME_DATE,
-                                                    READ_VALUE = @READ_VALUE,
-                                                    UPDATE_READ_DATE = @UPDATE_READ_DATE
-                                                    WHERE METER_NO = @METER_NO
-                                            END
+                            UPDATE T_OV_MeterCurrentValue SET
+                                METER_NAME = @METER_NAME,
+                                TIME_VALUE = @TIME_VALUE,
+                                UPDATE_TIME_DATE = @UPDATE_TIME_DATE,
+                                READ_VALUE = @READ_VALUE,
+                                UPDATE_READ_DATE = @UPDATE_READ_DATE
+                                WHERE METER_NO = @METER_NO
+                        END
 
-                                        ELSE
+                    ELSE
 
-                                            BEGIN
-                                                INSERT T_OV_MeterCurrentValue(
-                                                    METER_NO, METER_NAME, TIME_VALUE,
-						                            UPDATE_TIME_DATE, READ_VALUE, UPDATE_READ_DATE )
-						                            VALUES
-                                                    (@METER_NO, @METER_NAME, @TIME_VALUE,
-                                                     @UPDATE_TIME_DATE, @READ_VALUE, @UPDATE_READ_DATE
-                                                    )
-                                            END ";
+                        BEGIN
+                            INSERT T_OV_MeterCurrentValue(
+                                METER_NO, METER_NAME, TIME_VALUE,
+						        UPDATE_TIME_DATE, READ_VALUE, UPDATE_READ_DATE )
+						        VALUES
+                                (@METER_NO, @METER_NAME, @TIME_VALUE,
+                                 @UPDATE_TIME_DATE, @READ_VALUE, @UPDATE_READ_DATE
+                                )
+                        END ";
 
-            string InsertLogSQL = @"
-                    INSERT T_OV_MeterValueLog(
-                           METER_NO, METER_NAME, TIME_VALUE,
-						   UPDATE_TIME_DATE, READ_VALUE, UPDATE_READ_DATE )
-						   VALUES
-                           (@METER_NO, @METER_NAME, @TIME_VALUE,
-                            @UPDATE_TIME_DATE, @READ_VALUE, @UPDATE_READ_DATE
-                           )
+            string InsertLogSQL = 
+                @"INSERT T_OV_MeterValueLog(
+                        METER_NO, METER_NAME, TIME_VALUE,
+			            UPDATE_TIME_DATE, READ_VALUE, UPDATE_READ_DATE )
+			            VALUES
+                        (@METER_NO, @METER_NAME, @TIME_VALUE,
+                         @UPDATE_TIME_DATE, @READ_VALUE, @UPDATE_READ_DATE
+                        )
                            ";
 
             try
@@ -61,7 +62,7 @@ namespace EmailService.WorkJob
 
                 //string ApiURL = "http://47.100.19.132:8060/appzhwater/getDyhMsg?SYNC_KEY=FSR3RFDAFW445452";
 
-                string jsonArrayStr = GetWebAPI.HttpGetApi(Runtime.ApiURL, out string statusCode);
+                string jsonArrayStr = GetWebAPI.HttpGetApi(Runtime.ApiURL, out var statusCode);
 
                 Config.log.Info("------ 请求webApi数据 结果： statusCode：" + statusCode);
                 Runtime.ShowLog("------ 请求webApi数据 结果： statusCode：" + statusCode);
@@ -81,7 +82,7 @@ namespace EmailService.WorkJob
                         Config.log.Info("------ 开始 存储数据 ------");
                         using (SqlConnection conn = new SqlConnection(Runtime.MSSQLServerConnect))
                         {
-                            int resultSQL = conn.Execute(UpdateSQL, new
+                            int resultSql = conn.Execute(UpdateSQL, new
                             {
                                 METER_NO = jObj["METER_NO"].ToString(),
                                 METER_NAME = jObj["METER_NAME"].ToString(),
@@ -101,16 +102,16 @@ namespace EmailService.WorkJob
                                 UPDATE_READ_DATE = jObj["UPDATE_READ_DATE"].ToString()
                             });
 
-                            if (resultSQL > 0)
+                            if (resultSql > 0)
                             {
-                                Config.log.Info("------ 完成 存储数据，影响行数：" + resultSQL);
+                                Config.log.Info("------ 完成 存储数据，影响行数：" + resultSql);
                             }
                             else
                             {
                                 Config.log.Error("------ 存储数据 失败！");
                             }
 
-                            count = count + resultSQL;
+                            count = count + resultSql;
                         }
 
                     }
@@ -152,9 +153,9 @@ namespace EmailService.WorkJob
             request.Accept = "text/html,application/xhtml+xml,*/*";
             request.ContentType = "application/json";
             request.Method = type.ToUpper().ToString();//get或者post  
-            byte[] buffer = encoding.GetBytes(jsonstr);
-            request.ContentLength = buffer.Length;
-            request.GetRequestStream().Write(buffer, 0, buffer.Length);
+            //byte[] buffer = encoding.GetBytes(jsonstr);
+            //request.ContentLength = buffer.Length;
+            //request.GetRequestStream().Write(buffer, 0, buffer.Length);
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
             {
