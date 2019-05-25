@@ -71,6 +71,8 @@ namespace EmailService.WorkJob
                 if (statusCode == "OK")
                 {
                     Config.log.Info("------ 开始 解析数据 ------");
+                    Runtime.ShowLog("------ 开始 解析数据 ------");
+
                     int count = 0;
                     JArray jArray = JArray.Parse(jsonArrayStr);
                     foreach (var item in jArray)
